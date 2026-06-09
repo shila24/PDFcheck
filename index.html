@@ -1,0 +1,2115 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ファイルPDF判定・変換ツール</title>
+  <meta name="description" content="ファイルPDF判定・変換ツール。端末内で処理し、外部送信なしでPDF判定とPDF化を行います。">
+  <meta name="theme-color" content="#195AA4">
+  <style>
+    :root {
+      color-scheme: light;
+
+      /* ===== Design tokens: previewsample型のCSS Custom Properties ===== */
+      --blue-900: #123f77;
+      --blue-800: #195aa4;
+      --blue-500: #6c8abd;
+      --blue-100: #edf4fb;
+      --blue-50: #f7fbff;
+
+      --gray-900: #101010;
+      --gray-800: #202a30;
+      --gray-500: #7e888f;
+      --gray-100: #e7ebef;
+      --gray-50: #f7f8fa;
+
+      --text-primary: var(--gray-900);
+      --text-secondary: rgba(16, 16, 16, .68);
+      --text-muted: rgba(16, 16, 16, .52);
+      --bg-primary: #ffffff;
+      --bg-secondary: #f7f8fa;
+      --surface-primary: #ffffff;
+      --surface-tint: #fbfdff;
+      --border-default: rgba(16, 16, 16, .12);
+      --border-strong: rgba(25, 90, 164, .26);
+      --border-focus: var(--blue-800);
+
+      --surface-success: #1e7b65;
+      --surface-caution: #916626;
+      --surface-danger: #b22323;
+
+      --font-base: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Arial, "Noto Sans JP", Meiryo, sans-serif;
+      --font-number: "Helvetica Neue", Arial, sans-serif;
+      --font-mono: SFMono-Regular, Consolas, Menlo, Courier, monospace;
+
+      --elevation-1: 0 1px 3px 1px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .08);
+      --elevation-4: 0 18px 50px rgba(25, 90, 164, .12), 0 4px 12px rgba(0, 0, 0, .06);
+      --radius-sm: 8px;
+      --size-content: 1120px;
+      --size-article: 680px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-base);
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1.7;
+      letter-spacing: .02em;
+      word-wrap: break-word;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      font-kerning: auto;
+    }
+
+    a { color: inherit; }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 68px;
+      padding: 0 clamp(20px, 4vw, 48px);
+      background: rgba(255, 255, 255, .92);
+      border-bottom: 1px solid var(--border-default);
+      backdrop-filter: blur(14px);
+    }
+
+    .nav-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--blue-800);
+      text-decoration: none;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      font-feature-settings: "palt";
+    }
+
+    .brand-mark {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--blue-800);
+      box-shadow: 16px 0 0 var(--blue-500);
+      margin-right: 16px;
+      flex: 0 0 auto;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color .15s ease;
+    }
+
+    .nav-links a:hover { color: var(--blue-800); }
+
+    .nav-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 8px 18px;
+      border-radius: var(--radius-sm);
+      background: var(--blue-800);
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      text-decoration: none;
+      transition: opacity .15s ease, transform .15s ease;
+    }
+
+    .nav-cta:hover { opacity: .86; transform: translateY(-1px); }
+
+    main { overflow: hidden; }
+
+    .hero {
+      width: min(var(--size-content), calc(100% - 48px));
+      margin: 0 auto;
+      padding: clamp(32px, 5vw, 64px) 0 clamp(28px, 4.5vw, 52px);
+      display: grid;
+      grid-template-columns: minmax(0, 1.22fr) minmax(300px, .78fr);
+      gap: clamp(24px, 4vw, 48px);
+      align-items: center;
+    }
+
+    .hero-copy { min-width: 0; }
+
+    .eyebrow,
+    .section-label {
+      margin: 0 0 12px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--blue-800);
+      font-size: clamp(1.8rem, 2.7vw, 2.35rem);
+      font-weight: 500;
+      line-height: 1.38;
+      letter-spacing: .015em;
+      font-feature-settings: "palt";
+    }
+
+    .lead {
+      max-width: 760px;
+      margin: 20px 0 0;
+      color: var(--text-primary);
+      font-size: clamp(1.05rem, 1.7vw, 1.45rem);
+      line-height: 2.05;
+      letter-spacing: .03em;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 26px;
+    }
+
+    .button,
+    .download-link,
+    .hero-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      min-height: 52px;
+      padding: 12px 28px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: var(--blue-800);
+      color: white;
+      text-decoration: none;
+      font-family: var(--font-base);
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      cursor: pointer;
+      transition: opacity .15s ease, transform .15s ease, box-shadow .15s ease;
+      box-shadow: 0 8px 22px rgba(25, 90, 164, .22);
+    }
+
+    .button:disabled {
+      opacity: .48;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .button:disabled:hover {
+      opacity: .48;
+      transform: none;
+    }
+
+    .button:hover,
+    .download-link:hover,
+    .hero-button:hover {
+      opacity: .88;
+      transform: translateY(-1px);
+    }
+
+    .secondary {
+      background: transparent;
+      color: var(--blue-800);
+      border-color: var(--border-strong);
+      box-shadow: none;
+    }
+
+    .secondary:hover { background: var(--blue-50); }
+
+    .hero-note {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .hero-card {
+      position: relative;
+      min-width: 0;
+      padding: 26px;
+      border: 1px solid var(--border-default);
+      border-radius: 24px;
+      background: linear-gradient(180deg, #fff 0%, var(--blue-50) 100%);
+      box-shadow: var(--elevation-4);
+    }
+
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      inset: 16px 16px auto auto;
+      width: 80px;
+      height: 80px;
+      border: 1px solid rgba(25, 90, 164, .12);
+      border-radius: 50%;
+      background: rgba(25, 90, 164, .04);
+      pointer-events: none;
+    }
+
+    .mini-title {
+      margin: 0 0 18px;
+      color: var(--blue-800);
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.55;
+      letter-spacing: .04em;
+      font-feature-settings: "palt";
+    }
+
+    .mini-list {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .mini-list li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .check {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: var(--blue-100);
+      color: var(--blue-800);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .section,
+    .upload-section {
+      width: min(var(--size-content), calc(100% - 48px));
+      margin: 0 auto;
+      padding: clamp(28px, 4.5vw, 56px) 0;
+    }
+
+    .section-inner-narrow {
+      max-width: var(--size-article);
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .section-title {
+      margin: 0;
+      color: var(--blue-800);
+      font-size: clamp(1.75rem, 3vw, 2.5rem);
+      font-weight: 700;
+      line-height: 1.38;
+      letter-spacing: .05em;
+      font-feature-settings: "palt";
+    }
+
+    .section-lead {
+      margin: 12px auto 0;
+      color: var(--text-secondary);
+      font-size: 16px;
+      line-height: 1.95;
+    }
+
+    .section-divider {
+      width: min(var(--size-content), calc(100% - 48px));
+      margin: 0 auto;
+      border: 0;
+      border-top: 1px solid var(--border-default);
+    }
+
+    .panel {
+      margin-top: 22px;
+      background: var(--surface-primary);
+      border: 1px solid var(--border-default);
+      border-radius: 26px;
+      box-shadow: var(--elevation-1);
+      padding: clamp(20px, 3.8vw, 36px);
+    }
+
+    .drop-zone {
+      position: relative;
+      min-height: 220px;
+      border: 2px dashed rgba(25, 90, 164, .28);
+      border-radius: 22px;
+      padding: clamp(22px, 3vw, 32px) clamp(18px, 3vw, 32px);
+      text-align: center;
+      background:
+        linear-gradient(180deg, rgba(247, 251, 255, .92), #fff),
+        repeating-linear-gradient(135deg, rgba(25, 90, 164, .06) 0 1px, transparent 1px 12px);
+      transition: border-color .15s ease, background .15s ease, transform .15s ease, box-shadow .15s ease;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .drop-zone:focus-visible {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 4px rgba(25, 90, 164, .16);
+    }
+
+    .drop-zone.dragover {
+      border-color: var(--blue-800);
+      background: var(--blue-50);
+      transform: translateY(-2px);
+      box-shadow: 0 18px 42px rgba(25, 90, 164, .12);
+    }
+
+    .drop-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+      margin-bottom: 16px;
+      border-radius: 22px;
+      background: var(--blue-100);
+      color: var(--blue-800);
+      font-family: var(--font-number);
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: .06em;
+    }
+
+    .drop-zone strong {
+      display: block;
+      color: var(--blue-800);
+      font-size: clamp(1.25rem, 2.4vw, 1.8rem);
+      font-weight: 700;
+      line-height: 1.45;
+      letter-spacing: .05em;
+      font-feature-settings: "palt";
+      margin-bottom: 8px;
+    }
+
+    .drop-zone p {
+      max-width: 620px;
+      margin: 0 auto 20px;
+      color: var(--text-secondary);
+      font-size: 15px;
+      line-height: 1.9;
+    }
+
+    input[type="file"] { display: none; }
+
+    .hint {
+      margin-top: 14px;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.75;
+    }
+
+    .staging {
+      margin-top: 22px;
+      border: 1px solid var(--border-default);
+      border-radius: 18px;
+      background: var(--surface-tint);
+      padding: 18px;
+    }
+
+    .staging-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .staging-title {
+      margin: 0;
+      color: var(--blue-800);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .staging-summary {
+      margin: 4px 0 0;
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .staging-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .output-mode {
+      margin: 0 0 16px;
+      padding: 14px;
+      border: 1px solid var(--border-default);
+      border-radius: 14px;
+      background: var(--surface-primary);
+    }
+
+    .output-mode legend {
+      padding: 0 4px;
+      color: var(--blue-800);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .mode-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .mode-option {
+      position: relative;
+      display: inline-flex;
+      min-width: 112px;
+    }
+
+    .mode-option input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .mode-option span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 40px;
+      padding: 8px 14px;
+      border: 1px solid var(--border-default);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--blue-800);
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .mode-option input:checked + span {
+      border-color: var(--blue-800);
+      background: var(--blue-800);
+      color: #fff;
+    }
+
+    .mode-option input:focus-visible + span {
+      box-shadow: 0 0 0 4px rgba(25, 90, 164, .16);
+    }
+
+    .output-mode-note {
+      margin: 8px 0 0;
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .staged-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .staged-reorder-hint {
+      margin: 0 0 10px;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .staging-footer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+
+    .staged-empty {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .staged-item {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--border-default);
+      border-radius: 14px;
+      background: var(--surface-primary);
+    }
+
+    .staged-item.dragging {
+      opacity: .62;
+      border-color: var(--border-strong);
+      background: var(--blue-50);
+    }
+
+    .staged-check {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--blue-800);
+    }
+
+    .staged-name {
+      display: block;
+      color: var(--text-primary);
+      font-weight: 700;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .staged-hint {
+      display: block;
+      margin-top: 2px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .staged-reorder {
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--border-default);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--blue-800);
+      font-family: var(--font-base);
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .icon-button:hover { background: var(--blue-50); }
+
+    .icon-button:disabled {
+      color: var(--gray-500);
+      cursor: not-allowed;
+      background: var(--gray-50);
+    }
+
+    .result-list {
+      display: grid;
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    .result-heading {
+      margin: 24px 0 0;
+      color: var(--blue-800);
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.5;
+      letter-spacing: .04em;
+      outline: none;
+    }
+
+    .result-heading:focus-visible {
+      box-shadow: 0 0 0 4px rgba(25, 90, 164, .16);
+      border-radius: 8px;
+    }
+
+    .result {
+      border: 1px solid var(--border-default);
+      border-radius: 18px;
+      padding: 18px;
+      background: var(--surface-primary);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, .04);
+    }
+
+    .result h2 {
+      margin: 0 0 10px;
+      color: var(--text-primary);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+
+    dl {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 8px 16px;
+      margin: 14px 0 18px;
+      padding: 16px;
+      border-radius: 14px;
+      background: var(--bg-secondary);
+      font-size: 14px;
+    }
+
+    dt { color: var(--text-secondary); }
+
+    dd {
+      margin: 0;
+      color: var(--text-primary);
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 11px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .06em;
+    }
+
+    .ok { background: rgba(30, 123, 101, .11); color: var(--surface-success); }
+    .warn { background: rgba(145, 102, 38, .13); color: var(--surface-caution); }
+    .bad { background: rgba(178, 35, 35, .11); color: var(--surface-danger); }
+
+    .message {
+      margin: 12px 0 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .download-link {
+      min-height: 44px;
+      padding: 9px 20px;
+      font-size: 15px;
+      box-shadow: none;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 28px;
+    }
+
+    .card {
+      padding: 24px;
+      border: 1px solid var(--border-default);
+      border-radius: 18px;
+      background: #fff;
+      transition: box-shadow .2s ease, transform .2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--elevation-4);
+    }
+
+    .card-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      margin-bottom: 16px;
+      border-radius: 50%;
+      background: var(--blue-100);
+      color: var(--blue-800);
+      font-family: var(--font-number);
+      font-weight: 800;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      color: var(--blue-800);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.5;
+      letter-spacing: .04em;
+      font-feature-settings: "palt";
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .details-wrap {
+      max-width: 860px;
+      margin: 26px auto 0;
+    }
+
+    details {
+      border: 1px solid var(--border-default);
+      border-radius: 16px;
+      background: var(--surface-primary);
+      padding: 18px 20px;
+      color: var(--text-secondary);
+    }
+
+    details + details { margin-top: 12px; }
+
+    details summary {
+      color: var(--blue-800);
+      cursor: pointer;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      font-feature-settings: "palt";
+    }
+
+    details p {
+      margin: 14px 0 0;
+      line-height: 1.85;
+    }
+
+    details ul {
+      margin: 14px 0 0;
+      padding-left: 1.25rem;
+      line-height: 1.85;
+    }
+
+    details li + li { margin-top: 6px; }
+
+    code {
+      background: var(--blue-50);
+      border: 1px solid rgba(25, 90, 164, .12);
+      border-radius: 7px;
+      padding: 1px 6px;
+      color: var(--blue-800);
+      font-family: var(--font-mono);
+      font-size: .92em;
+    }
+
+    .small { font-size: 13px; }
+
+    .footer {
+      padding: 34px 24px 44px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 920px) {
+      .hero {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+      .hero-card { max-width: 620px; }
+      .feature-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (min-width: 921px) {
+      h1 { white-space: nowrap; }
+    }
+
+    @media (max-width: 720px) {
+      .nav { height: 62px; }
+      .nav-links { display: none; }
+      .nav-brand { font-size: 16px; }
+      .nav-cta { min-height: 34px; padding: 7px 14px; }
+      .hero,
+      .section,
+      .upload-section,
+      .section-divider { width: min(calc(100% - 32px), var(--size-content)); }
+      .hero { padding-top: 32px; }
+      h1 { font-size: clamp(1.75rem, 8vw, 2.35rem); line-height: 1.45; }
+      .lead { font-size: 16px; line-height: 1.9; }
+      .hero-actions { align-items: stretch; }
+      .hero-button,
+      .button { width: 100%; }
+      .panel { border-radius: 20px; padding: 16px; }
+      .drop-zone { min-height: 180px; padding: 24px 18px; border-radius: 18px; }
+      .staged-item { grid-template-columns: auto minmax(0, 1fr); }
+      .staged-reorder,
+      .staged-remove { grid-column: 2; }
+      .staging-footer { justify-content: stretch; }
+      dl { grid-template-columns: 1fr; gap: 2px; }
+      dt { font-weight: 700; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav" aria-label="ページ内ナビゲーション">
+    <a class="nav-brand" href="#top"><span class="brand-mark" aria-hidden="true"></span>ファイルPDF判定・変換ツール</a>
+    <ul class="nav-links">
+      <li><a href="#upload">アップロード</a></li>
+      <li><a href="#features">使い方</a></li>
+      <li><a href="#notes">ヘルプ</a></li>
+    </ul>
+    <a class="nav-cta" href="#upload">使用する</a>
+  </nav>
+
+  <main id="top">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <p class="eyebrow">Browser only / PDF Utility</p>
+        <h1 id="page-title">ファイルPDF判定・変換ツール</h1>
+        <p class="lead">
+          拡張子の抜けたpdfファイル、複数の画像ファイルをpdfファイルで保存します。
+          画像やテキストはブラウザ上でPDF化し、ファイルを外部へ送信することはありません。
+        </p>
+        <div class="hero-actions">
+          <a class="hero-button" href="#upload">使用する</a>
+          <p class="hero-note">複数ファイル対応 / JPEG・PNG・WebP・GIF・BMP・txt対応</p>
+        </div>
+      </div>
+
+      <aside class="hero-card" aria-label="ツールの特徴">
+        <h2 class="mini-title">中身を見て、端末内でPDFへ。</h2>
+        <ul class="mini-list">
+          <li><span class="check">✓</span><span>ファイルの中身から形式を判定します。</span></li>
+          <li><span class="check">✓</span><span>画像・テキストファイルはA4ページに整えてPDFへ変換します。</span></li>
+          <li><span class="check">✓</span><span>PDFをダウンロードできます。</span></li>
+        </ul>
+      </aside>
+    </section>
+
+    <hr class="section-divider">
+
+    <section class="upload-section" id="upload" aria-labelledby="upload-title">
+      <div class="section-inner-narrow">
+        <p class="section-label">01 / Upload</p>
+        <h2 class="section-title" id="upload-title">ファイルを選択する</h2>
+        <p class="section-lead">ドラッグ&ドロップ、またはボタンから選択してください。順番と対象を確認してからPDF化します。</p>
+      </div>
+
+      <section class="panel" aria-label="ファイル処理パネル">
+        <div id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="ファイルをドラッグアンドドロップ、またはEnterキーで選択">
+          <div class="drop-icon" aria-hidden="true">PDF</div>
+          <strong>ここにファイルをドロップ</strong>
+          <p>PDFの拡張子が抜けていた場合は <code>.pdf</code> を付けて保存し直し、<br>画像やテキストファイルはPDFとしてまとめて出力します。</p>
+          <label class="button" for="fileInput">ファイルを選択</label>
+          <input id="fileInput" type="file" multiple>
+          <div class="hint">選択したファイルはサーバーへ送信されません。端末内のブラウザ処理で完結します。</div>
+        </div>
+
+        <section class="staging" aria-labelledby="staging-title">
+          <div class="staging-header">
+            <div>
+              <h2 class="staging-title" id="staging-title">変換対象リスト</h2>
+              <p class="staging-summary" id="stagingSummary">ファイルはまだ追加されていません。</p>
+            </div>
+          </div>
+          <fieldset class="output-mode" aria-describedby="outputModeNote">
+            <legend>出力方法</legend>
+            <div class="mode-options">
+              <label class="mode-option">
+                <input type="radio" name="outputMode" value="merge" checked>
+                <span>画像をまとめる</span>
+              </label>
+              <label class="mode-option">
+                <input type="radio" name="outputMode" value="individual">
+                <span>すべて個別</span>
+              </label>
+            </div>
+            <p class="output-mode-note" id="outputModeNote">まとめる場合も、結合するのは画像だけです。PDFとテキストは個別に保存します。出力ファイル名は <code>file_&lt;日時&gt;.pdf</code> 形式で自動付与されます。</p>
+          </fieldset>
+          <p class="staged-reorder-hint">↑↓ボタンまたはドラッグで順番を変更できます。</p>
+          <ul class="staged-list" id="stagedList"></ul>
+          <div class="staging-footer">
+            <button class="button" type="button" id="convertButton" disabled>PDF化</button>
+            <button class="button secondary" type="button" id="clearButton">全てクリア</button>
+          </div>
+        </section>
+
+        <h2 class="result-heading" id="resultHeading" tabindex="-1">結果</h2>
+        <div id="resultList" class="result-list" aria-live="polite"></div>
+      </section>
+    </section>
+
+    <hr class="section-divider">
+
+    <section class="section" id="features" aria-labelledby="features-title">
+      <div class="section-inner-narrow">
+        <p class="section-label">02 / 使い方</p>
+        <h2 class="section-title" id="features-title">使い方</h2>
+      </div>
+      <div class="feature-grid">
+        <article class="card">
+          <div class="card-number">1</div>
+          <h3>ファイルを選ぶ</h3>
+          <p>ボタンまたはドラッグ＆ドロップで追加します（複数可）。</p>
+        </article>
+        <article class="card">
+          <div class="card-number">2</div>
+          <h3>対象と順番を整える</h3>
+          <p>リストでチェックして対象を選び、↑↓ボタンやドラッグで並び替えます。複数画像は1つのPDFに結合されます。</p>
+        </article>
+        <article class="card">
+          <div class="card-number">3</div>
+          <h3>PDF化して保存</h3>
+          <p>PDF化を押し、結果カードのPDFをダウンロードから保存します。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="notes" aria-labelledby="notes-title">
+      <div class="section-inner-narrow">
+        <p class="section-label">03 / Help</p>
+        <h2 class="section-title" id="notes-title">ヘルプ</h2>
+      </div>
+      <div class="details-wrap">
+        <details>
+          <summary>主な機能</summary>
+          <p>
+            拡張子が抜けた・間違っているファイルでも、中身がPDFなら正しい <code>.pdf</code> に戻せます。
+            JPEG・PNG などの複数画像を、選んだ順に1つのPDFへまとめられます。
+          </p>
+        </details>
+        <details>
+          <summary>対応形式</summary>
+          <p>
+            中身から <code>PDF</code>, <code>JPEG</code>, <code>PNG</code>, <code>WebP</code>,
+            <code>GIF</code>, <code>BMP</code>, <code>txt</code> を判定します。
+            画像とテキストはブラウザのCanvasでページ画像を作り、PDFに埋め込んで出力します。
+            SVG/TIFFなどは安定対応外のためPDF化しません。
+          </p>
+        </details>
+        <details>
+          <summary>できないこと</summary>
+          <ul>
+            <li>Office系(<code>docx</code>/<code>xlsx</code>/<code>pptx</code>)のレイアウト保持変換は、静的HTMLだけでは安定して行えません。</li>
+            <li>既存のPDF同士を1つに結合する機能は提供していません。信頼できるPDF結合には第三者PDFライブラリの同梱が必要で、本ツールは依存ライブラリなし・端末内処理・no-uploadを優先しているためです。</li>
+          </ul>
+        </details>
+        <details>
+          <summary>利用上の注意</summary>
+          <ul class="small">
+            <li>本ツールは MIT License のもと、現状の状態のまま提供されます。明示・黙示を問わず一切の保証はなく、ファイル内容についても保証いたしかねます。ご利用は自己責任でお願いします。</li>
+            <li>すべての処理は端末内(ブラウザ)で完結し、ファイルや内容を外部へ送信・保存しません。</li>
+            <li>PDFは中身から判定し、内容を変えず <code>.pdf</code> として保存し直しますが、内容検査・修復・無害化は行いません。</li>
+            <li>画像・テキストはページ画像としてPDF化するため、生成PDFに検索可能なテキスト層はありません。</li>
+            <li>巨大なファイルはサイズ/メモリ上限を超過して処理できないことがあります。</li>
+            <li>重要な用途では生成結果を必ずご自身で確認し、機密ファイルは所属組織の規程に従って取り扱ってください。</li>
+          </ul>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <a href="https://github.com/shila24/PDFcheck" rel="noopener" target="_blank">GitHub(ソースコード)</a>
+    / ご要望・バグ報告は
+    <a href="https://github.com/shila24/PDFcheck/issues" rel="noopener" target="_blank">Issues</a>
+    へ。
+  </footer>
+
+  <script>
+    "use strict";
+
+    const A4_PORTRAIT = { width: 595.28, height: 841.89 };
+    const A4_LANDSCAPE = { width: 841.89, height: 595.28 };
+    const CANVAS_SCALE = 2;
+    const MAX_TEXT_PAGES = 200;
+    const MAX_IMAGE_PAGES = 100;
+    const MAX_FILE_BYTES = 50 * 1024 * 1024;
+    const MAX_IMAGE_PIXELS = 40 * 1000 * 1000;
+    const RASTER_IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp"]);
+    const RASTER_IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "webp", "gif", "bmp"];
+    const UNSUPPORTED_IMAGE_EXTENSIONS = ["svg", "tif", "tiff", "avif", "heic", "heif", "ico"];
+
+    const fileInput = document.getElementById("fileInput");
+    const dropZone = document.getElementById("dropZone");
+    const stagedList = document.getElementById("stagedList");
+    const stagingSummary = document.getElementById("stagingSummary");
+    const convertButton = document.getElementById("convertButton");
+    const clearButton = document.getElementById("clearButton");
+    const resultHeading = document.getElementById("resultHeading");
+    const resultList = document.getElementById("resultList");
+    const activeUrls = [];
+    const stagedFiles = [];
+    let nextStagedFileId = 1;
+    let draggedStagedFileId = null;
+
+    fileInput.addEventListener("change", () => {
+      handleFiles(Array.from(fileInput.files || []));
+      fileInput.value = "";
+    });
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+      dropZone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        dropZone.classList.add("dragover");
+      });
+    });
+
+    ["dragleave", "drop"].forEach((eventName) => {
+      dropZone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        dropZone.classList.remove("dragover");
+      });
+    });
+
+    dropZone.addEventListener("drop", (event) => {
+      const files = Array.from(event.dataTransfer.files || []);
+      handleFiles(files);
+    });
+
+    dropZone.addEventListener("click", (event) => {
+      if (event.target === fileInput || closestElement(event.target, 'label[for="fileInput"]')) return;
+      fileInput.click();
+    });
+
+    dropZone.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        fileInput.click();
+      }
+    });
+
+    convertButton.addEventListener("click", processSelectedFiles);
+    clearButton.addEventListener("click", clearAll);
+    stagedList.addEventListener("change", handleStagedChange);
+    stagedList.addEventListener("click", handleStagedClick);
+    stagedList.addEventListener("dragstart", handleStagedDragStart);
+    stagedList.addEventListener("dragover", handleStagedDragOver);
+    stagedList.addEventListener("drop", handleStagedDrop);
+    stagedList.addEventListener("dragend", handleStagedDragEnd);
+    renderStagedList();
+
+    async function handleFiles(files) {
+      if (!files.length) {
+        addMessage("ファイルが選択されていません。", "warn");
+        return;
+      }
+
+      for (const file of files) {
+        const staged = {
+          id: nextStagedFileId++,
+          file,
+          include: true,
+          hint: "判定中..."
+        };
+        stagedFiles.push(staged);
+      }
+
+      renderStagedList();
+
+      for (const staged of stagedFiles.slice(-files.length)) {
+        staged.hint = await makeStagingHint(staged.file);
+        renderStagedList();
+      }
+    }
+
+    function clearResults() {
+      for (const url of activeUrls) URL.revokeObjectURL(url);
+      activeUrls.length = 0;
+      resultList.innerHTML = "";
+    }
+
+    function clearAll() {
+      stagedFiles.length = 0;
+      draggedStagedFileId = null;
+      clearResults();
+      renderStagedList();
+    }
+
+    function addMessage(message, level) {
+      const item = document.createElement("div");
+      item.className = "result";
+      item.setAttribute("data-processing-message", "true");
+      item.innerHTML = `<span class="status ${level}">${escapeHtml(levelLabel(level))}</span><p class="message">${escapeHtml(message)}</p>`;
+      resultList.appendChild(item);
+    }
+
+    async function makeStagingHint(file) {
+      if (isFileTooLarge(file)) {
+        return `サイズ上限超過 / ${formatBytes(file.size)}（上限 ${formatBytes(MAX_FILE_BYTES)}）`;
+      }
+
+      try {
+        const buffer = await file.arrayBuffer();
+        const detected = detectFileType(file, new Uint8Array(buffer));
+        return `${detected.label} / ${formatBytes(file.size)}`;
+      } catch {
+        return `判定できませんでした / ${formatBytes(file.size)}`;
+      }
+    }
+
+    function renderStagedList() {
+      const selectedCount = stagedFiles.filter((item) => item.include).length;
+      convertButton.disabled = selectedCount === 0;
+
+      if (!stagedFiles.length) {
+        stagingSummary.textContent = "ファイルはまだ追加されていません。";
+        stagedList.innerHTML = '<li class="staged-empty">ファイルを追加すると、ここで対象と順番を調整できます。</li>';
+        return;
+      }
+
+      stagingSummary.textContent = `${stagedFiles.length}件中 ${selectedCount}件をPDF化します。`;
+      stagedList.innerHTML = stagedFiles.map((item, index) => renderStagedItem(item, index)).join("");
+    }
+
+    function renderStagedItem(item, index) {
+      const name = item.file.name || "名称未設定ファイル";
+      const escapedId = escapeAttribute(String(item.id));
+      const escapedName = escapeAttribute(name);
+      return `
+        <li class="staged-item" data-id="${escapedId}" draggable="true">
+          <input class="staged-check" type="checkbox" data-action="include" ${item.include ? "checked" : ""} aria-label="${escapedName}をPDF化対象に含める">
+          <div>
+            <span class="staged-name">${escapeHtml(name)}</span>
+            <span class="staged-hint">${escapeHtml(item.hint)}</span>
+          </div>
+          <div class="staged-reorder" aria-label="並び替え操作">
+            <button class="icon-button" type="button" data-action="up" ${index === 0 ? "disabled" : ""} aria-label="${escapedName}を上へ移動">↑</button>
+            <button class="icon-button" type="button" data-action="down" ${index === stagedFiles.length - 1 ? "disabled" : ""} aria-label="${escapedName}を下へ移動">↓</button>
+          </div>
+          <button class="icon-button staged-remove" type="button" data-action="remove" aria-label="${escapedName}をリストから削除">×</button>
+        </li>
+      `;
+    }
+
+    function handleStagedChange(event) {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement) || target.dataset.action !== "include") return;
+
+      const item = findStagedItem(target);
+      if (!item) return;
+
+      item.include = target.checked;
+      renderStagedList();
+    }
+
+    function handleStagedClick(event) {
+      const button = closestElement(event.target, "button[data-action]");
+      if (!button) return;
+
+      const action = button.dataset.action;
+      const item = findStagedItem(button);
+      if (!item) return;
+
+      if (action === "remove") {
+        stagedFiles.splice(stagedFiles.indexOf(item), 1);
+      } else if (action === "up") {
+        moveStagedItem(item.id, Math.max(0, stagedFiles.indexOf(item) - 1));
+      } else if (action === "down") {
+        moveStagedItem(item.id, Math.min(stagedFiles.length - 1, stagedFiles.indexOf(item) + 1));
+      }
+
+      renderStagedList();
+    }
+
+    function handleStagedDragStart(event) {
+      const row = closestElement(event.target, ".staged-item");
+      if (!row || !event.dataTransfer) return;
+
+      draggedStagedFileId = Number(row.dataset.id);
+      row.classList.add("dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", String(draggedStagedFileId));
+    }
+
+    function handleStagedDragOver(event) {
+      const row = closestElement(event.target, ".staged-item");
+      if (!row || !event.dataTransfer || draggedStagedFileId === null) return;
+
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+    }
+
+    function handleStagedDrop(event) {
+      const row = closestElement(event.target, ".staged-item");
+      if (!row || draggedStagedFileId === null) return;
+
+      event.preventDefault();
+      moveStagedItem(draggedStagedFileId, getStagedIndex(Number(row.dataset.id)));
+      renderStagedList();
+    }
+
+    function handleStagedDragEnd() {
+      draggedStagedFileId = null;
+      renderStagedList();
+    }
+
+    function findStagedItem(element) {
+      const row = element.closest(".staged-item");
+      if (!row) return null;
+      const id = Number(row.dataset.id);
+      return stagedFiles.find((item) => item.id === id) || null;
+    }
+
+    function closestElement(target, selector) {
+      return target instanceof Element ? target.closest(selector) : null;
+    }
+
+    function getStagedIndex(id) {
+      return stagedFiles.findIndex((item) => item.id === id);
+    }
+
+    function moveStagedItem(id, targetIndex) {
+      const currentIndex = getStagedIndex(id);
+      if (currentIndex < 0 || targetIndex < 0 || currentIndex === targetIndex) return;
+
+      const [item] = stagedFiles.splice(currentIndex, 1);
+      stagedFiles.splice(targetIndex, 0, item);
+    }
+
+    async function processSelectedFiles() {
+      const runTimestamp = makeTimestampToken();
+      clearResults();
+
+      const selected = stagedFiles.filter((item) => item.include);
+      if (!selected.length) {
+        addMessage("PDF化するファイルを選択してください。", "warn");
+        renderStagedList();
+        return;
+      }
+
+      addMessage(`${selected.length}件の選択ファイルを処理中です。`, "warn");
+
+      const outputMode = getOutputMode();
+      const imageItems = [];
+      const resultEntries = [];
+      for (let index = 0; index < selected.length; index++) {
+        const item = selected[index];
+        try {
+          if (isFileTooLarge(item.file)) {
+            resultEntries.push({ index, file: item.file, result: makeFileSizeLimitResult(item.file) });
+            continue;
+          }
+
+          const buffer = await item.file.arrayBuffer();
+          const bytes = new Uint8Array(buffer);
+          const detected = detectFileType(item.file, bytes);
+
+          if (outputMode === "merge" && detected.kind === "image") {
+            imageItems.push({ item, detected, index });
+          } else {
+            resultEntries.push({
+              index,
+              file: item.file,
+              result: await processFileFromBuffer(item.file, buffer, bytes, detected)
+            });
+          }
+        } catch (error) {
+          resultEntries.push({ index, file: item.file, result: makeErrorResult(error) });
+        }
+      }
+
+      if (imageItems.length) {
+        resultEntries.push(await processImageItems(imageItems));
+      }
+
+      const sortedEntries = resultEntries.sort((left, right) => left.index - right.index);
+      assignAutomaticOutputNames(sortedEntries, runTimestamp);
+      sortedEntries.forEach((entry) => renderResult(entry.file, entry.result));
+
+      removeProcessingMessage();
+      renderStagedList();
+      focusResultsHeading();
+    }
+
+    function focusResultsHeading() {
+      resultHeading.focus();
+      const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      resultHeading.scrollIntoView({ block: "start", behavior });
+    }
+
+    function getOutputMode() {
+      const checked = document.querySelector('input[name="outputMode"]:checked');
+      return checked instanceof HTMLInputElement ? checked.value : "merge";
+    }
+
+    function assignAutomaticOutputNames(entries, timestamp) {
+      const downloadableEntries = entries.filter((entry) => entry.result.blob);
+      const downloadableCount = downloadableEntries.length;
+      let outputIndex = 0;
+
+      for (const entry of entries) {
+        if (!entry.result.blob) continue;
+        outputIndex++;
+        entry.result.outputName = makeAutomaticOutputName(timestamp, outputIndex, downloadableCount);
+      }
+    }
+
+    async function processImageItems(imageItems) {
+      if (imageItems.length > MAX_IMAGE_PAGES) {
+        return makeImageMergeLimitEntry(imageItems);
+      }
+
+      try {
+        const pages = [];
+        for (const imageItem of imageItems) {
+          const image = await loadImage(imageItem.item.file);
+          pages.push(renderImageToA4Page(image));
+        }
+
+        return {
+          index: imageItems[0].index,
+          file: makeCombinedResultFile(imageItems),
+          result: {
+            ok: true,
+            level: "ok",
+            detected: `画像 ${imageItems.length}件（選択順で結合）`,
+            outputName: "-",
+            blob: buildPdfFromJpegPages(pages),
+            message: "選択された画像をリスト順に1つのPDFへ結合しました。"
+          }
+        };
+      } catch (error) {
+        return {
+          index: imageItems[0].index,
+          file: makeCombinedResultFile(imageItems),
+          result: makeErrorResult(error)
+        };
+      }
+    }
+
+    function makeImageMergeLimitEntry(imageItems) {
+      return {
+        index: imageItems[0].index,
+        file: makeCombinedResultFile(imageItems),
+        result: {
+          ok: false,
+          level: "warn",
+          detected: `画像 ${imageItems.length}件`,
+          outputName: "-",
+          message: `画像の結合は${MAX_IMAGE_PAGES}ページまでです。対象を減らしてからPDF化してください。`
+        }
+      };
+    }
+
+    function makeCombinedResultFile(imageItems) {
+      return {
+        name: imageItems.length === 1 ? imageItems[0].item.file.name : `画像まとめ ${imageItems.length}件`,
+        type: imageItems.map((imageItem) => imageItem.item.file.type || "不明").join(", "),
+        size: imageItems.reduce((total, imageItem) => total + imageItem.item.file.size, 0)
+      };
+    }
+
+    function makeErrorResult(error) {
+      return {
+        ok: false,
+        level: "bad",
+        detected: "処理エラー",
+        outputName: "-",
+        message: error instanceof Error ? error.message : String(error)
+      };
+    }
+
+    function removeProcessingMessage() {
+      const processingMessage = resultList.querySelector("[data-processing-message]");
+      if (processingMessage) processingMessage.remove();
+    }
+
+    async function processFile(file) {
+      if (isFileTooLarge(file)) {
+        return makeFileSizeLimitResult(file);
+      }
+
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      const detected = detectFileType(file, bytes);
+      const result = await processFileFromBuffer(file, buffer, bytes, detected);
+      if (result.blob) {
+        result.outputName = makeAutomaticOutputName(makeTimestampToken(), 1, 1);
+      }
+      return result;
+    }
+
+    async function processFileFromBuffer(file, buffer, bytes, detected) {
+      if (isFileTooLarge(file)) {
+        return makeFileSizeLimitResult(file);
+      }
+
+      if (detected.kind === "pdf") {
+        return {
+          ok: true,
+          level: "ok",
+          detected: detected.label,
+          outputName: "-",
+          blob: new Blob([buffer], { type: "application/pdf" }),
+          message: "中身がPDFです。.pdf付きのファイルとして保存できます。"
+        };
+      }
+
+      if (detected.kind === "image") {
+        const blob = await imageFileToPdfBlob(file);
+        return {
+          ok: true,
+          level: "ok",
+          detected: detected.label,
+          outputName: "-",
+          blob,
+          message: "画像をA4サイズのPDFに変換しました。"
+        };
+      }
+
+      if (detected.kind === "text") {
+        const decoded = decodeText(bytes);
+        const blob = await textToPdfBlob(decoded.text);
+        return {
+          ok: true,
+          level: "ok",
+          detected: `${detected.label}（${decoded.encoding}で読込）`,
+          outputName: "-",
+          blob,
+          message: "テキストをPDFに変換しました。日本語はページ画像として埋め込まれます。"
+        };
+      }
+
+      return {
+        ok: false,
+        level: detected.level || "bad",
+        detected: detected.label,
+        outputName: "-",
+        message: detected.message || "この形式は静的HTMLだけではPDF化できません。"
+      };
+    }
+
+    function detectFileType(file, bytes) {
+      const ext = getExtension(file.name);
+      const mime = (file.type || "").toLowerCase();
+
+      if (containsPdfHeader(bytes)) {
+        return { kind: "pdf", label: "PDF（中身から判定）" };
+      }
+
+      if (startsWith(bytes, [0xff, 0xd8, 0xff])) {
+        return { kind: "image", label: "JPEG画像（中身から判定）" };
+      }
+
+      if (startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
+        return { kind: "image", label: "PNG画像（中身から判定）" };
+      }
+
+      if (ascii(bytes, 0, 4) === "RIFF" && ascii(bytes, 8, 4) === "WEBP") {
+        return { kind: "image", label: "WebP画像（中身から判定）" };
+      }
+
+      if (ascii(bytes, 0, 6) === "GIF87a" || ascii(bytes, 0, 6) === "GIF89a") {
+        return { kind: "image", label: "GIF画像（中身から判定・先頭フレームをPDF化）" };
+      }
+
+      if (ascii(bytes, 0, 2) === "BM") {
+        return { kind: "image", label: "BMP画像（中身から判定）" };
+      }
+
+      if (isZip(bytes)) {
+        const subtype = detectZipSubtype(bytes);
+        if (subtype) {
+          return {
+            kind: "unsupported",
+            level: "warn",
+            label: subtype,
+            message: `${subtype} は判定できましたが、静的HTMLだけではレイアウトを保ったPDF変換ができません。元アプリでPDF出力してください。`
+          };
+        }
+
+        return {
+          kind: "unsupported",
+          level: "warn",
+          label: "ZIP系ファイル",
+          message: "ZIP系ファイルです。中身がPDFではないため、このツールではPDF化できません。"
+        };
+      }
+
+      if (ext === "pdf" || mime === "application/pdf") {
+        return {
+          kind: "unsupported",
+          level: "bad",
+          label: "PDF名またはPDF MIMEだが、PDFヘッダー未検出",
+          message: "ファイル名やMIMEはPDFに見えますが、中身に %PDF- ヘッダーが見つかりません。破損または別形式の可能性があります。"
+        };
+      }
+
+      if (isRasterImageFallback(mime, ext)) {
+        return { kind: "image", label: "画像（拡張子またはMIMEから判定）" };
+      }
+
+      if (isUnsupportedImageFallback(mime, ext)) {
+        return {
+          kind: "unsupported",
+          level: "warn",
+          label: "非対応画像形式",
+          message: "画像はJPEG/PNG/WebP/GIF/BMPのみ対応です。SVG/TIFFなどは安定対応外のためPDF化できません。"
+        };
+      }
+
+      if (mime.startsWith("text/") || ["txt", "csv", "tsv", "md", "log", "json", "xml", "html", "css", "js"].includes(ext) || looksLikeText(bytes)) {
+        return { kind: "text", label: "テキスト" };
+      }
+
+      if (startsWith(bytes, [0x49, 0x49, 0x2a, 0x00]) || startsWith(bytes, [0x4d, 0x4d, 0x00, 0x2a])) {
+        return {
+          kind: "unsupported",
+          level: "warn",
+          label: "TIFF画像",
+          message: "TIFFはブラウザで直接読み込めないことが多いため、PNG/JPEGに変換してから使ってください。"
+        };
+      }
+
+      return {
+        kind: "unsupported",
+        level: "bad",
+        label: "不明な形式",
+        message: "PDFヘッダーや対応画像形式として判定できませんでした。"
+      };
+    }
+
+    function isRasterImageFallback(mime, ext) {
+      return RASTER_IMAGE_MIME_TYPES.has(mime) || RASTER_IMAGE_EXTENSIONS.includes(ext);
+    }
+
+    function isUnsupportedImageFallback(mime, ext) {
+      return (mime.startsWith("image/") && !RASTER_IMAGE_MIME_TYPES.has(mime)) || UNSUPPORTED_IMAGE_EXTENSIONS.includes(ext);
+    }
+
+    function isFileTooLarge(file) {
+      return file.size > MAX_FILE_BYTES;
+    }
+
+    function makeFileSizeLimitResult(file) {
+      return {
+        ok: false,
+        level: "warn",
+        detected: "サイズ上限超過",
+        outputName: "-",
+        message: `このファイルは${formatBytes(file.size)}です。1ファイルあたり${formatBytes(MAX_FILE_BYTES)}までにしてください。`
+      };
+    }
+
+    function startsWith(bytes, signature) {
+      if (bytes.length < signature.length) return false;
+      return signature.every((value, index) => bytes[index] === value);
+    }
+
+    function ascii(bytes, start, length) {
+      if (bytes.length < start + length) return "";
+      let value = "";
+      for (let index = start; index < start + length; index++) {
+        value += String.fromCharCode(bytes[index]);
+      }
+      return value;
+    }
+
+    function containsPdfHeader(bytes) {
+      const max = Math.min(bytes.length, 1024);
+      for (let index = 0; index <= max - 5; index++) {
+        if (
+          bytes[index] === 0x25 &&
+          bytes[index + 1] === 0x50 &&
+          bytes[index + 2] === 0x44 &&
+          bytes[index + 3] === 0x46 &&
+          bytes[index + 4] === 0x2d
+        ) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function isZip(bytes) {
+      return startsWith(bytes, [0x50, 0x4b, 0x03, 0x04]) ||
+        startsWith(bytes, [0x50, 0x4b, 0x05, 0x06]) ||
+        startsWith(bytes, [0x50, 0x4b, 0x07, 0x08]);
+    }
+
+    function detectZipSubtype(bytes) {
+      const sampleSize = Math.min(bytes.length, 1024 * 512);
+      let text = "";
+      for (let index = 0; index < sampleSize; index++) {
+        const byte = bytes[index];
+        text += byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : " ";
+      }
+
+      if (text.includes("word/")) return "Word文書（docx系）";
+      if (text.includes("xl/")) return "Excelブック（xlsx系）";
+      if (text.includes("ppt/")) return "PowerPoint資料（pptx系）";
+      if (text.includes("META-INF/manifest.xml") && text.includes("mimetype")) return "OpenDocument系ファイル";
+      return "";
+    }
+
+    function looksLikeText(bytes) {
+      const sampleSize = Math.min(bytes.length, 4096);
+      if (sampleSize === 0) return true;
+
+      let controls = 0;
+      let nulls = 0;
+
+      for (let index = 0; index < sampleSize; index++) {
+        const byte = bytes[index];
+        if (byte === 0) nulls++;
+        if (byte < 0x09 || (byte > 0x0d && byte < 0x20)) controls++;
+      }
+
+      return nulls === 0 && controls / sampleSize < 0.02;
+    }
+
+    function decodeText(bytes) {
+      if (startsWith(bytes, [0xef, 0xbb, 0xbf])) {
+        return {
+          encoding: "UTF-8 BOM",
+          text: new TextDecoder("utf-8").decode(bytes.slice(3))
+        };
+      }
+
+      if (startsWith(bytes, [0xff, 0xfe])) {
+        return {
+          encoding: "UTF-16LE BOM",
+          text: new TextDecoder("utf-16le").decode(bytes.slice(2))
+        };
+      }
+
+      if (startsWith(bytes, [0xfe, 0xff])) {
+        try {
+          return {
+            encoding: "UTF-16BE BOM",
+            text: new TextDecoder("utf-16be").decode(bytes.slice(2))
+          };
+        } catch {
+          return {
+            encoding: "UTF-16BE BOM",
+            text: decodeUtf16BE(bytes.slice(2))
+          };
+        }
+      }
+
+      for (const encoding of ["utf-8", "shift_jis", "euc-jp"]) {
+        try {
+          return {
+            encoding,
+            text: new TextDecoder(encoding, { fatal: true }).decode(bytes)
+          };
+        } catch {
+          // 次の候補へ
+        }
+      }
+
+      return {
+        encoding: "UTF-8（置換文字あり）",
+        text: new TextDecoder("utf-8").decode(bytes)
+      };
+    }
+
+    function decodeUtf16BE(bytes) {
+      const swapped = new Uint8Array(bytes.length);
+      for (let index = 0; index + 1 < bytes.length; index += 2) {
+        swapped[index] = bytes[index + 1];
+        swapped[index + 1] = bytes[index];
+      }
+      return new TextDecoder("utf-16le").decode(swapped);
+    }
+
+    async function imageFileToPdfBlob(file) {
+      const image = await loadImage(file);
+      const page = renderImageToA4Page(image);
+      return buildPdfFromJpegPages([page]);
+    }
+
+    function loadImage(file) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const image = new Image();
+
+        image.onload = () => {
+          URL.revokeObjectURL(url);
+          const pixels = image.naturalWidth * image.naturalHeight;
+          if (!Number.isFinite(pixels) || pixels <= 0) {
+            reject(new Error("画像サイズを確認できませんでした。別形式に変換してから使ってください。"));
+            return;
+          }
+          if (pixels > MAX_IMAGE_PIXELS) {
+            reject(new Error(`画像のピクセル数が大きすぎます。${formatBytes(file.size)} / ${image.naturalWidth}×${image.naturalHeight}px です。${MAX_IMAGE_PIXELS.toLocaleString("ja-JP")}ピクセル以内の画像にしてください。`));
+            return;
+          }
+          resolve(image);
+        };
+
+        image.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error("画像として読み込めませんでした。ブラウザ非対応形式の可能性があります。"));
+        };
+
+        image.src = url;
+      });
+    }
+
+    function renderImageToA4Page(image) {
+      const orientation = image.naturalWidth > image.naturalHeight ? A4_LANDSCAPE : A4_PORTRAIT;
+      const canvas = makePageCanvas(orientation.width, orientation.height);
+      const context = canvas.getContext("2d");
+      context.scale(CANVAS_SCALE, CANVAS_SCALE);
+      fillWhite(context, orientation.width, orientation.height);
+
+      const margin = 28;
+      const maxWidth = orientation.width - margin * 2;
+      const maxHeight = orientation.height - margin * 2;
+      const ratio = Math.min(maxWidth / image.naturalWidth, maxHeight / image.naturalHeight);
+      const drawWidth = image.naturalWidth * ratio;
+      const drawHeight = image.naturalHeight * ratio;
+      const x = (orientation.width - drawWidth) / 2;
+      const y = (orientation.height - drawHeight) / 2;
+
+      context.drawImage(image, x, y, drawWidth, drawHeight);
+
+      return {
+        dataUrl: canvas.toDataURL("image/jpeg", 0.92),
+        pageWidth: orientation.width,
+        pageHeight: orientation.height,
+        pixelWidth: canvas.width,
+        pixelHeight: canvas.height
+      };
+    }
+
+    async function textToPdfBlob(text) {
+      const page = A4_PORTRAIT;
+      const fontSize = 11;
+      const lineHeight = 17;
+      const margin = 42;
+      const maxWidth = page.width - margin * 2;
+      const maxLines = Math.floor((page.height - margin * 2) / lineHeight);
+
+      const measuringCanvas = document.createElement("canvas");
+      const measuringContext = measuringCanvas.getContext("2d");
+      const fontFamily = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Arial, "Noto Sans JP", Meiryo, sans-serif';
+      measuringContext.font = `${fontSize}pt ${fontFamily}`;
+
+      const maxWrappedLines = MAX_TEXT_PAGES * maxLines;
+      const wrapped = wrapText(text, measuringContext, maxWidth, maxWrappedLines);
+      const wrappedLines = wrapped.lines;
+      if (wrapped.truncated) {
+        throw new Error(`テキストが長すぎます。${MAX_TEXT_PAGES}ページ以内に分割してください。`);
+      }
+      const pages = [];
+
+      for (let start = 0; start < wrappedLines.length; start += maxLines) {
+        if (pages.length >= MAX_TEXT_PAGES) {
+          throw new Error(`テキストが長すぎます。${MAX_TEXT_PAGES}ページ以内に分割してください。`);
+        }
+
+        const lines = wrappedLines.slice(start, start + maxLines);
+        const canvas = makePageCanvas(page.width, page.height);
+        const context = canvas.getContext("2d");
+        context.scale(CANVAS_SCALE, CANVAS_SCALE);
+        fillWhite(context, page.width, page.height);
+        context.fillStyle = "#101010";
+        context.font = `${fontSize}pt ${fontFamily}`;
+        context.textBaseline = "top";
+
+        let y = margin;
+        for (const line of lines) {
+          context.fillText(line, margin, y);
+          y += lineHeight;
+        }
+
+        pages.push({
+          dataUrl: canvas.toDataURL("image/jpeg", 0.90),
+          pageWidth: page.width,
+          pageHeight: page.height,
+          pixelWidth: canvas.width,
+          pixelHeight: canvas.height
+        });
+      }
+
+      if (pages.length === 0) {
+        const canvas = makePageCanvas(page.width, page.height);
+        const context = canvas.getContext("2d");
+        context.scale(CANVAS_SCALE, CANVAS_SCALE);
+        fillWhite(context, page.width, page.height);
+        pages.push({
+          dataUrl: canvas.toDataURL("image/jpeg", 0.90),
+          pageWidth: page.width,
+          pageHeight: page.height,
+          pixelWidth: canvas.width,
+          pixelHeight: canvas.height
+        });
+      }
+
+      return buildPdfFromJpegPages(pages);
+    }
+
+    function makePageCanvas(widthPt, heightPt) {
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(widthPt * CANVAS_SCALE);
+      canvas.height = Math.round(heightPt * CANVAS_SCALE);
+      return canvas;
+    }
+
+    function fillWhite(context, width, height) {
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, width, height);
+    }
+
+    function wrapText(text, context, maxWidth, maxLines) {
+      const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      const sourceLines = normalized.split("\n");
+      const result = [];
+      let truncated = false;
+
+      function pushLine(line) {
+        if (result.length >= maxLines) {
+          truncated = true;
+          return false;
+        }
+        result.push(line);
+        return true;
+      }
+
+      sourceLoop:
+      for (const sourceLine of sourceLines) {
+        const line = sourceLine.replace(/\t/g, "    ");
+
+        if (line === "") {
+          if (!pushLine("")) break;
+          continue;
+        }
+
+        let current = "";
+        for (const char of Array.from(line)) {
+          const test = current + char;
+          if (current && context.measureText(test).width > maxWidth) {
+            if (!pushLine(current)) break sourceLoop;
+            current = char;
+          } else {
+            current = test;
+          }
+        }
+
+        if (!pushLine(current)) break;
+      }
+
+      return { lines: result, truncated };
+    }
+
+    function buildPdfFromJpegPages(pages) {
+      const totalObjects = 2 + pages.length * 3;
+      const offsets = new Array(totalObjects + 1).fill(0);
+      const chunks = [];
+      let position = 0;
+      const encoder = new TextEncoder();
+
+      function writeBytes(bytes) {
+        chunks.push(bytes);
+        position += bytes.length;
+      }
+
+      function writeString(text) {
+        writeBytes(encoder.encode(text));
+      }
+
+      function writeObject(number, parts) {
+        offsets[number] = position;
+        writeString(`${number} 0 obj\n`);
+        for (const part of parts) {
+          if (typeof part === "string") writeString(part);
+          else writeBytes(part);
+        }
+        writeString("\nendobj\n");
+      }
+
+      writeString("%PDF-1.4\n% Generated by static browser tool\n");
+
+      const kids = pages.map((_, index) => `${3 + index * 3} 0 R`).join(" ");
+      writeObject(1, ["<< /Type /Catalog /Pages 2 0 R >>"]);
+      writeObject(2, [`<< /Type /Pages /Kids [${kids}] /Count ${pages.length} >>`]);
+
+      for (let index = 0; index < pages.length; index++) {
+        const page = pages[index];
+        const pageObject = 3 + index * 3;
+        const imageObject = pageObject + 1;
+        const contentObject = pageObject + 2;
+        const imageName = `Im${index + 1}`;
+        const jpegBytes = dataUrlToBytes(page.dataUrl);
+        const content = `q\n${fixed(page.pageWidth)} 0 0 ${fixed(page.pageHeight)} 0 0 cm\n/${imageName} Do\nQ\n`;
+        const contentBytes = encoder.encode(content);
+
+        writeObject(pageObject, [
+          `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${fixed(page.pageWidth)} ${fixed(page.pageHeight)}] `,
+          `/Resources << /XObject << /${imageName} ${imageObject} 0 R >> >> `,
+          `/Contents ${contentObject} 0 R >>`
+        ]);
+
+        writeObject(imageObject, [
+          `<< /Type /XObject /Subtype /Image /Width ${page.pixelWidth} /Height ${page.pixelHeight} `,
+          `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`,
+          jpegBytes,
+          "\nendstream"
+        ]);
+
+        writeObject(contentObject, [
+          `<< /Length ${contentBytes.length} >>\nstream\n`,
+          contentBytes,
+          "endstream"
+        ]);
+      }
+
+      const xrefStart = position;
+      writeString(`xref\n0 ${totalObjects + 1}\n`);
+      writeString("0000000000 65535 f \n");
+      for (let number = 1; number <= totalObjects; number++) {
+        writeString(`${String(offsets[number]).padStart(10, "0")} 00000 n \n`);
+      }
+
+      writeString(`trailer\n<< /Size ${totalObjects + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF\n`);
+
+      return new Blob(chunks, { type: "application/pdf" });
+    }
+
+    function dataUrlToBytes(dataUrl) {
+      const base64 = dataUrl.split(",")[1] || "";
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index++) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+      return bytes;
+    }
+
+    function fixed(value) {
+      return Number(value).toFixed(2).replace(/\.00$/, "");
+    }
+
+    function getExtension(name) {
+      const clean = (name || "").split(/[\\/]/).pop() || "";
+      const lastDot = clean.lastIndexOf(".");
+      if (lastDot <= 0 || lastDot === clean.length - 1) return "";
+      return clean.slice(lastDot + 1).toLowerCase();
+    }
+
+    function makeTimestampToken() {
+      const now = new Date();
+      const date = [
+        now.getFullYear(),
+        padDatePart(now.getMonth() + 1),
+        padDatePart(now.getDate())
+      ].join("");
+      const time = [
+        padDatePart(now.getHours()),
+        padDatePart(now.getMinutes()),
+        padDatePart(now.getSeconds())
+      ].join("");
+      return `${date}-${time}`;
+    }
+
+    function makeAutomaticOutputName(timestamp, number, total) {
+      return total === 1 ? `file_${timestamp}.pdf` : `file${number}_${timestamp}.pdf`;
+    }
+
+    function padDatePart(value) {
+      return String(value).padStart(2, "0");
+    }
+
+    function renderResult(file, result) {
+      const item = document.createElement("article");
+      item.className = "result";
+
+      const extension = getExtension(file.name) || "なし";
+      const mime = file.type || "不明";
+      const size = formatBytes(file.size);
+      const url = result.blob ? URL.createObjectURL(result.blob) : "";
+      if (url) activeUrls.push(url);
+
+      const actions = result.blob
+        ? `<div class="actions"><a class="download-link" href="${escapeAttribute(url)}" download="${escapeAttribute(result.outputName)}">PDFをダウンロード</a></div>`
+        : "";
+
+      item.innerHTML = `
+        <h2>${escapeHtml(file.name || "名称未設定ファイル")}</h2>
+        <span class="status ${escapeAttribute(result.level)}">${escapeHtml(levelLabel(result.level))}</span>
+        <dl>
+          <dt>元の拡張子</dt><dd>${escapeHtml(extension)}</dd>
+          <dt>MIMEタイプ</dt><dd>${escapeHtml(mime)}</dd>
+          <dt>サイズ</dt><dd>${escapeHtml(size)}</dd>
+          <dt>判定結果</dt><dd>${escapeHtml(result.detected)}</dd>
+          <dt>出力名</dt><dd>${escapeHtml(result.outputName)}</dd>
+        </dl>
+        ${actions}
+        <p class="message">${escapeHtml(result.message)}</p>
+      `;
+
+      resultList.appendChild(item);
+    }
+
+    function levelLabel(level) {
+      if (level === "ok") return "OK";
+      if (level === "warn") return "注意";
+      return "不可";
+    }
+
+    function formatBytes(bytes) {
+      const units = ["B", "KB", "MB", "GB"];
+      let value = bytes;
+      let unit = 0;
+      while (value >= 1024 && unit < units.length - 1) {
+        value /= 1024;
+        unit++;
+      }
+      return `${value.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value).replaceAll("`", "&#96;");
+    }
+  </script>
+</body>
+</html>
