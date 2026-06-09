@@ -1021,6 +1021,7 @@
             中身から <code>PDF</code>, <code>JPEG</code>, <code>PNG</code>, <code>WebP</code>,
             <code>GIF</code>, <code>BMP</code>, <code>txt</code> を判定します。
             画像とテキストはブラウザのCanvasでページ画像を作り、PDFに埋め込んで出力します。
+            iPhoneの写真（HEIC/HEIF）は、iPhoneから直接アップロードする場合は自動でJPEGに変換されて処理できますが、PC内のHEIC/HEIFファイルはそのままでは読み込めません。その場合は PNG/JPEG に変換してからアップロードしてください。
             SVG/TIFFなどは安定対応外のためPDF化しません。
           </p>
         </details>
@@ -1065,7 +1066,10 @@
     const MAX_IMAGE_PIXELS = 40 * 1000 * 1000;
     const RASTER_IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp"]);
     const RASTER_IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "webp", "gif", "bmp"];
-    const UNSUPPORTED_IMAGE_EXTENSIONS = ["svg", "tif", "tiff", "avif", "heic", "heif", "ico"];
+    const HEIC_EXTENSIONS = ["heic", "heif"];
+    const HEIC_MIME_TYPES = new Set(["image/heic", "image/heif"]);
+    const HEIC_MAJOR_BRANDS = new Set(["heic", "heix", "heim", "heis", "hevc", "hevm", "hevs", "heif", "mif1", "msf1"]);
+    const UNSUPPORTED_IMAGE_EXTENSIONS = ["svg", "tif", "tiff", "avif", "ico"];
 
     const fileInput = document.getElementById("fileInput");
     const dropZone = document.getElementById("dropZone");
@@ -1545,6 +1549,15 @@
         return { kind: "image", label: "BMP画像（中身から判定）" };
       }
 
+      if (isHeicLike(mime, ext) || (ascii(bytes, 4, 4) === "ftyp" && HEIC_MAJOR_BRANDS.has(ascii(bytes, 8, 4).toLowerCase()))) {
+        return {
+          kind: "unsupported",
+          level: "warn",
+          label: "iPhoneの写真（HEIC/HEIF）",
+          message: "iPhoneの写真でよく使われる HEIC/HEIF 形式です。iPhoneから直接アップロードする場合は自動でJPEGに変換されて処理できますが、PC内のHEIC/HEIFファイルはそのままでは読み込めません。PNG/JPEG に変換してからアップロードしてください。"
+        };
+      }
+
       if (isZip(bytes)) {
         const subtype = detectZipSubtype(bytes);
         if (subtype) {
@@ -1609,6 +1622,10 @@
 
     function isRasterImageFallback(mime, ext) {
       return RASTER_IMAGE_MIME_TYPES.has(mime) || RASTER_IMAGE_EXTENSIONS.includes(ext);
+    }
+
+    function isHeicLike(mime, ext) {
+      return HEIC_MIME_TYPES.has(mime) || HEIC_EXTENSIONS.includes(ext);
     }
 
     function isUnsupportedImageFallback(mime, ext) {
